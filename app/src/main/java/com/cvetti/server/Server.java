@@ -13,26 +13,21 @@ public class Server {
 
     public void start() throws IOException {
         try (ServerSocket serverSocket = new ServerSocket(port)) {
-            System.out.println("Servidor rodando na porta " + port);
+            System.out.println("Servidor iniciado na porta " + port);
 
             while (true) {
                 Socket clientSocket = serverSocket.accept();
-                System.out.println("Novo cliente conectado: " + clientSocket.getInetAddress());
+                // REMOVI O SYSTEM.OUT DAQUI. 
+                // Deixe o ClientHandler e o SessionManager cuidarem dos logs.
                 new Thread(new ClientHandler(clientSocket)).start();
             }
         }
     }
+
     public static void main(String[] args) {
-        System.out.println("Iniciando servidor de usuários...");
-
-        // Porta padrão (pode mudar se quiser)
-        int port = 8080;
-
         try {
-            Server server = new Server(port);
-            server.start();
+            new Server(8080).start();
         } catch (Exception e) {
-            System.err.println("Erro ao iniciar o servidor: " + e.getMessage());
             e.printStackTrace();
         }
     }

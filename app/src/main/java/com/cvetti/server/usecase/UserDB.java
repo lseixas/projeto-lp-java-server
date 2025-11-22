@@ -3,31 +3,24 @@ package com.cvetti.server.usecase;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.math.BigDecimal; 
 import com.cvetti.server.objects.User;
 
-public class UserDB  {
+public class UserDB {
 
-    // --- Detalhes da Conexão JDBC (Ajuste conforme seu ambiente) ---
-    private static final String DB_URL = "jdbc:mysql://localhost:3306/banco_cvetti_users"; // Altere 'seu_banco'
-    private static final String DB_USER = "root"; // Altere seu usuário
-    private static final String DB_PASSWORD = "root1234"; // Altere sua senha
+    // --- Detalhes da Conexão JDBC ---
+    private static final String DB_URL = "jdbc:mysql://localhost:3306/banco_cvetti_users";
+    private static final String DB_USER = "root";
+    private static final String DB_PASSWORD = "root1234";
 
-    // --- Método para obter conexão ---
     private Connection getConnection() throws SQLException {
-        // Opcional: Carregar o driver (geralmente não necessário com JDBC 4+)
-        // try {
-        //     Class.forName("com.mysql.cj.jdbc.Driver");
-        // } catch (ClassNotFoundException e) {
-        //     System.err.println("Driver MySQL JDBC não encontrado.");
-        //     e.printStackTrace();
-        //     throw new SQLException("Driver não encontrado", e);
-        // }
         return DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
     }
 
     // --- CREATE ---
     public boolean addUser(User user) {
-        String sql = "INSERT INTO usuario (id, name, email, cpf, passwordHash, saldo, nascimento) VALUES (?, ?, ?, ?, ?, ?, ?)";
+        // CORREÇÃO: Adicionado campo 'phone'
+        String sql = "INSERT INTO usuario (id, name, email, cpf, phone, passwordHash, saldo, nascimento) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
@@ -35,59 +28,67 @@ public class UserDB  {
             pstmt.setString(2, user.getName());
             pstmt.setString(3, user.getEmail());
             pstmt.setString(4, user.getCpf());
-            pstmt.setString(5, user.getPasswordHash()); // Salva o hash
-             // Converta saldo para o tipo apropriado se necessário (ex: BigDecimal)
-            pstmt.setBigDecimal(6, new java.math.BigDecimal(user.getSaldo()));
-             // Converte java.util.Date para java.sql.Date
+            pstmt.setString(5, user.getPhone()); // <--- Novo campo
+            pstmt.setString(6, user.getPasswordHash());
+            pstmt.setBigDecimal(7, new BigDecimal(user.getSaldo()));
+            
             if (user.getNascimento() != null) {
-                pstmt.setDate(7, new java.sql.Date(user.getNascimento().getTime()));
+                pstmt.setDate(8, new java.sql.Date(user.getNascimento().getTime()));
             } else {
-                pstmt.setNull(7, Types.DATE);
+                pstmt.setNull(8, Types.DATE);
             }
 
-            int affectedRows = pstmt.executeUpdate();
-            return affectedRows > 0;
+            return pstmt.executeUpdate() > 0;
 
         } catch (SQLException e) {
             System.err.println("Erro ao adicionar usuário: " + e.getMessage());
-            e.printStackTrace();
             return false;
         }
     }
 
+    // --- READ (By CPF) - Usado no Login ---
+    public User getUserByCpf(String cpf) {
+        String sql = "SELECT * FROM usuario WHERE cpf = ?";
+        User user = null;
+
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setString(1, cpf);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    user = mapResultSetToUser(rs);
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Erro ao buscar usuário por CPF: " + e.getMessage());
+        }
+        return user;
+    }
+
     // --- READ (By ID) ---
     public User getUserById(String id) {
-        String sql = "SELECT id, name, email, cpf, passwordHash, saldo, nascimento FROM usuario WHERE id = ?";
+        String sql = "SELECT * FROM usuario WHERE id = ?";
         User user = null;
 
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setString(1, id);
-            ResultSet rs = pstmt.executeQuery();
-
-            if (rs.next()) {
-                user = new User(
-                        rs.getString("id"),
-                        rs.getString("name"),
-                        rs.getString("email"),
-                        rs.getString("cpf"),
-                        rs.getString("passwordHash"),
-                        rs.getBigDecimal("saldo").toString(), // Converte de volta para String
-                        rs.getDate("nascimento") // java.sql.Date é compatível com java.util.Date
-                );
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    user = mapResultSetToUser(rs);
+                }
             }
-            rs.close(); // Fechar ResultSet explicitamente dentro do try-with-resources do PreparedStatement
         } catch (SQLException e) {
-            System.err.println("Erro ao buscar usuário por ID: " + e.getMessage());
-            e.printStackTrace();
+            System.err.println("Erro ao buscar usuário: " + e.getMessage());
         }
-        return user; // Retorna null se não encontrar
+        return user;
     }
 
     // --- READ (All) ---
     public List<User> getAllUsers() {
-        String sql = "SELECT id, name, email, cpf, passwordHash, saldo, nascimento FROM usuario";
+        String sql = "SELECT * FROM usuario";
         List<User> users = new ArrayList<>();
 
         try (Connection conn = getConnection();
@@ -95,50 +96,42 @@ public class UserDB  {
              ResultSet rs = stmt.executeQuery(sql)) {
 
             while (rs.next()) {
-                User user = new User(
-                        rs.getString("id"),
-                        rs.getString("name"),
-                        rs.getString("email"),
-                        rs.getString("cpf"),
-                        rs.getString("passwordHash"),
-                        rs.getBigDecimal("saldo").toString(),
-                        rs.getDate("nascimento")
-                );
-                users.add(user);
+                users.add(mapResultSetToUser(rs));
             }
         } catch (SQLException e) {
-            System.err.println("Erro ao buscar todos os usuários: " + e.getMessage());
             e.printStackTrace();
-            // Retorna lista vazia em caso de erro
         }
         return users;
     }
 
-    // --- UPDATE ---
-    public boolean updateUser(User user) {
-        // Note: Não atualizamos o ID (chave primária) nem o passwordHash aqui
-        // A atualização de senha deve ser um processo separado e seguro
-        String sql = "UPDATE usuario SET name = ?, email = ?, cpf = ?, saldo = ?, nascimento = ? WHERE id = ?";
+    // Método auxiliar para evitar repetição de código na leitura do ResultSet
+    private User mapResultSetToUser(ResultSet rs) throws SQLException {
+        return new User(
+            rs.getString("id"),
+            rs.getString("name"),
+            rs.getString("email"),
+            rs.getString("cpf"),
+            rs.getString("phone"), // <--- Leitura do novo campo
+            rs.getString("passwordHash"),
+            rs.getBigDecimal("saldo").toString(),
+            rs.getDate("nascimento")
+        );
+    }
 
+    // --- UPDATE (Dados Cadastrais) ---
+    public boolean updateUser(User user) {
+        // CORREÇÃO: Atualiza também o telefone
+        String sql = "UPDATE usuario SET name = ?, email = ?, phone = ? WHERE id = ?";
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setString(1, user.getName());
             pstmt.setString(2, user.getEmail());
-            pstmt.setString(3, user.getCpf());
-            pstmt.setBigDecimal(4, new java.math.BigDecimal(user.getSaldo()));
-            if (user.getNascimento() != null) {
-                pstmt.setDate(5, new java.sql.Date(user.getNascimento().getTime()));
-            } else {
-                pstmt.setNull(5, Types.DATE);
-            }
-            pstmt.setString(6, user.getId()); // Condição WHERE
+            pstmt.setString(3, user.getPhone()); // <--- Novo campo
+            pstmt.setString(4, user.getId());
 
-            int affectedRows = pstmt.executeUpdate();
-            return affectedRows > 0;
-
+            return pstmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            System.err.println("Erro ao atualizar usuário: " + e.getMessage());
             e.printStackTrace();
             return false;
         }
@@ -147,52 +140,151 @@ public class UserDB  {
     // --- DELETE ---
     public boolean deleteUser(String id) {
         String sql = "DELETE FROM usuario WHERE id = ?";
-
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
-
             pstmt.setString(1, id);
-
-            int affectedRows = pstmt.executeUpdate();
-            return affectedRows > 0;
-
+            return pstmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            System.err.println("Erro ao deletar usuário: " + e.getMessage());
             e.printStackTrace();
             return false;
         }
     }
 
-    // --- Método main para teste rápido (opcional) ---
-    public static void main(String[] args) {
-        UserDB userDB = new UserDB();
+    // ========================================================================
+    // --- MÉTODOS FINANCEIROS ---
+    // ========================================================================
 
-        java.util.Date birthDate = new java.util.Date(); // Use uma data real
-        User newUser = new User("user1", "Test User", "test@example.com", "12345678900", "hashed_password", "100.50", birthDate);
-        if (userDB.addUser(newUser)) {
-            System.out.println("Usuário adicionado com sucesso.");
+    public boolean deposit(String id, BigDecimal value) {
+        String sql = "UPDATE usuario SET saldo = saldo + ? WHERE id = ?";
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            
+            pstmt.setBigDecimal(1, value);
+            pstmt.setString(2, id);
+            
+            return pstmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.err.println("Erro no depósito: " + e.getMessage());
+            return false;
+        }
+    }
+
+    public boolean withdraw(String id, BigDecimal value) {
+        // Verifica saldo antes
+        User u = getUserById(id);
+        if (u == null) return false;
+        BigDecimal currentBalance = new BigDecimal(u.getSaldo());
+        if (currentBalance.compareTo(value) < 0) {
+            return false;
         }
 
-        User foundUser = userDB.getUserById("user1");
-        if (foundUser != null) {
-            System.out.println("Usuário encontrado: " + foundUser.getName());
-        } else {
-            System.out.println("Usuário não encontrado.");
+        String sql = "UPDATE usuario SET saldo = saldo - ? WHERE id = ?";
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            
+            pstmt.setBigDecimal(1, value);
+            pstmt.setString(2, id);
+            
+            return pstmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.err.println("Erro no saque: " + e.getMessage());
+            return false;
         }
+    }
 
-        List<User> allUsers = userDB.getAllUsers();
-        System.out.println("Total de usuários: " + allUsers.size());
-        for (User u : allUsers) {
-            System.out.println("- " + u.getName());
+    public boolean transfer(String fromId, String toId, BigDecimal value) {
+        Connection conn = null;
+        try {
+            conn = getConnection();
+            conn.setAutoCommit(false); // Inicia Transação
+
+            // Valida saldo origem
+            User sender = getUserById(fromId); 
+            if (sender == null || new BigDecimal(sender.getSaldo()).compareTo(value) < 0) {
+                throw new SQLException("Saldo insuficiente ou remetente inválido.");
+            }
+
+            String sqlWithdraw = "UPDATE usuario SET saldo = saldo - ? WHERE id = ?";
+            String sqlDeposit = "UPDATE usuario SET saldo = saldo + ? WHERE id = ?";
+
+            try (PreparedStatement withdrawStmt = conn.prepareStatement(sqlWithdraw);
+                 PreparedStatement depositStmt = conn.prepareStatement(sqlDeposit)) {
+
+                // Executa Saque
+                withdrawStmt.setBigDecimal(1, value);
+                withdrawStmt.setString(2, fromId);
+                int wRows = withdrawStmt.executeUpdate();
+
+                // Executa Depósito
+                depositStmt.setBigDecimal(1, value);
+                depositStmt.setString(2, toId);
+                int dRows = depositStmt.executeUpdate();
+
+                if (wRows > 0 && dRows > 0) {
+                    conn.commit(); // Sucesso
+                    return true;
+                } else {
+                    conn.rollback(); // Falha no destino
+                    return false;
+                }
+            }
+        } catch (SQLException e) {
+            if (conn != null) {
+                try { conn.rollback(); } catch (SQLException ex) { ex.printStackTrace(); }
+            }
+            return false;
+        } finally {
+            if (conn != null) {
+                try { 
+                    conn.setAutoCommit(true);
+                    conn.close(); 
+                } catch (SQLException e) { e.printStackTrace(); }
+            }
         }
+    }
 
-         User userToUpdate = userDB.getUserById("user1");
-         if (userToUpdate != null) {
-             userToUpdate.setName("Updated Test User");
-             userToUpdate.setSaldo("150.75");
-             if(userDB.updateUser(userToUpdate)) {
-                 System.out.println("Usuário atualizado.");
-             }
-         }
+    // ========================================================================
+    // --- MÉTODOS PIX ---
+    // ========================================================================
+
+    public boolean addPixKey(String userId, String type, String value) {
+        String sql = "INSERT INTO pix_keys (user_id, key_type, key_value) VALUES (?, ?, ?)";
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, userId);
+            pstmt.setString(2, type);
+            pstmt.setString(3, value);
+            return pstmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            return false;
+        }
+    }
+
+    public List<String> getPixKeys(String userId) {
+        List<String> keys = new ArrayList<>();
+        String sql = "SELECT key_type, key_value FROM pix_keys WHERE user_id = ?";
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, userId);
+            ResultSet rs = pstmt.executeQuery();
+            while (rs.next()) {
+                keys.add(rs.getString("key_type") + ": " + rs.getString("key_value"));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return keys;
+    }
+
+    public boolean deletePixKey(String userId, String keyValue) {
+        String sql = "DELETE FROM pix_keys WHERE user_id = ? AND key_value = ?";
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, userId);
+            pstmt.setString(2, keyValue);
+            return pstmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            return false;
+        }
     }
 }

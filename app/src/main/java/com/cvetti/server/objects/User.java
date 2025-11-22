@@ -12,12 +12,14 @@ public class User {
     private String passwordHash; // Adicionado para armazenar o hash da senha
     private String saldo; // Considerar usar BigDecimal para valores monetários
     private Date nascimento;
+    private String phone;
 
-    public User(String id, String name, String email, String cpf, String passwordHash, String saldo, Date nascimento) {
+    public User(String id, String name, String email, String cpf, String phone, String passwordHash, String saldo, Date nascimento) {
         this.id = id;
         this.name = name;
         this.email = email;
         this.cpf = cpf;
+        this.phone = phone;
         this.passwordHash = passwordHash; // Inicializar o novo campo
         this.saldo = saldo;
         this.nascimento = nascimento;
@@ -51,6 +53,9 @@ public class User {
     public Date getNascimento() {
         return nascimento;
     }
+
+    public String getPhone() { return phone; }
+
     // --- Fim Getters ---
 
     public HashMap<String, Object> toMap() {
@@ -62,6 +67,7 @@ public class User {
         // Não inclua o hash da senha no toMap() por segurança, a menos que necessário
         result.put("saldo", saldo);
         result.put("nascimento", nascimento);
+        result.put("phone", phone);
         return result;
     }
 
@@ -72,5 +78,6 @@ public class User {
      public void setPasswordHash(String passwordHash) { this.passwordHash = passwordHash; }
      public void setSaldo(String saldo) { this.saldo = saldo; }
      public void setNascimento(Date nascimento) { this.nascimento = nascimento; }
+     public void setPhone(String phone) { this.phone = phone; }
      // Não adicione setter para ID se for imutável após criação
 }
