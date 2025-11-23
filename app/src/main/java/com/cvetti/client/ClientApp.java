@@ -36,7 +36,7 @@ public class ClientApp extends JFrame {
     public ClientApp() {
         // 1. Configurações Iniciais
         socketClient = new SocketClient("localhost", 8080);
-        loadBundle(new Locale("pt", "BR"));
+        loadBundle(Locale.forLanguageTag("pt-BR"));
 
         initializeUI();
         
@@ -97,9 +97,9 @@ public class ClientApp extends JFrame {
         // Botões de Idioma
         JPanel langPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
         JButton btnPt = new JButton("PT");
-        btnPt.addActionListener(e -> updateLanguage(new Locale("pt", "BR")));
+        btnPt.addActionListener(e -> updateLanguage(Locale.forLanguageTag("pt-BR")));
         JButton btnEn = new JButton("EN");
-        btnEn.addActionListener(e -> updateLanguage(new Locale("en", "US")));
+        btnEn.addActionListener(e -> updateLanguage(Locale.forLanguageTag("en-US")));
         
         langPanel.add(btnPt);
         langPanel.add(btnEn);

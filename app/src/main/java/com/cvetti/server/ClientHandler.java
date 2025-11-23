@@ -4,7 +4,6 @@ import java.io.*;
 import java.net.Socket;
 import java.math.BigDecimal;
 import java.util.Date;
-import java.util.List;
 import com.cvetti.server.usecase.UserDB;
 import com.cvetti.server.objects.User;
 import org.json.JSONArray;
