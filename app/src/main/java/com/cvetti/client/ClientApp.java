@@ -8,6 +8,7 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.Locale;
 import java.util.ResourceBundle;
+import java.util.UUID;
 
 public class ClientApp extends JFrame {
 
@@ -16,6 +17,10 @@ public class ClientApp extends JFrame {
     private SocketClient socketClient;
     private ResourceBundle messages;
     private JSONObject loggedUser;
+
+    // --- IDENTIFICADOR ÚNICO DA INSTÂNCIA (JANELA) ---
+    // Gera um código curto (ex: "A1B2C") ao abrir o app para o servidor saber quem é quem
+    private final String instanceId = UUID.randomUUID().toString().substring(0, 5).toUpperCase();
 
     // Componentes Visuais Globais
     private JLabel lblConnectionStatus;
@@ -26,7 +31,7 @@ public class ClientApp extends JFrame {
     private MenuScreen menuScreen;
     private TransactionScreen transactionScreen;
     private EditUserScreen editUserScreen;
-    private PixScreen pixScreen;
+    private PixScreen pixScreen; // Tela do Pix
 
     public ClientApp() {
         // 1. Configurações Iniciais
@@ -52,9 +57,9 @@ public class ClientApp extends JFrame {
     }
 
     private void initializeUI() {
-        this.setTitle("Banco Cvetti");
+        this.setTitle("Banco Cvetti - Cliente [" + instanceId + "]"); // Mostra ID no título também
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        this.setSize(600, 550);
+        this.setSize(600, 650); // Altura ajustada para caber tudo
         this.setLocationRelativeTo(null);
 
         // --- Painel Central (CardLayout para trocar telas) ---
@@ -67,7 +72,7 @@ public class ClientApp extends JFrame {
         menuScreen = new MenuScreen(this);
         transactionScreen = new TransactionScreen(this);
         editUserScreen = new EditUserScreen(this);
-        pixScreen = new PixScreen(this); 
+        pixScreen = new PixScreen(this);
 
         // Adiciona telas ao painel principal
         mainPanel.add(loginScreen, "LOGIN");
@@ -103,14 +108,15 @@ public class ClientApp extends JFrame {
         this.add(bottomPanel, BorderLayout.SOUTH);
     }
 
-    // --- LÓGICA DE CONEXÃO (Heartbeat) ---
+    // --- LÓGICA DE CONEXÃO (Heartbeat com ID) ---
     private void startConnectionMonitor() {
         Thread monitorThread = new Thread(() -> {
             while (true) {
                 try {
-                    // Cria pacote de "estou vivo"
+                    // Cria pacote de "estou vivo" com o ID da janela
                     JSONObject json = new JSONObject();
                     json.put("action", "heartbeat");
+                    json.put("instanceId", instanceId);
                     
                     // Envia e espera resposta rápida
                     String response = socketClient.send(json.toString());
@@ -140,14 +146,15 @@ public class ClientApp extends JFrame {
     }
 
     private void sendDisconnectSignal() {
-        // Envia aviso de saída em thread separada para não travar o fechamento
+        // Envia aviso de saída em thread separada
         Thread t = new Thread(() -> {
             JSONObject json = new JSONObject();
             json.put("action", "disconnect");
+            json.put("instanceId", instanceId); // Avisa quem está saindo
             socketClient.send(json.toString());
         });
         t.start();
-        try { t.join(500); } catch (InterruptedException ignored) {} // Espera até 0.5s para garantir envio
+        try { t.join(500); } catch (InterruptedException ignored) {} 
     }
 
     // --- MÉTODOS DE COMUNICAÇÃO ---
@@ -159,6 +166,9 @@ public class ClientApp extends JFrame {
              return;
         }
         
+        // Garante que toda requisição envie o ID da instância (útil para logs no server)
+        json.put("instanceId", instanceId);
+
         new Thread(() -> {
             String responseStr = socketClient.send(json.toString());
             SwingUtilities.invokeLater(() -> {
@@ -190,13 +200,13 @@ public class ClientApp extends JFrame {
 
     // --- GETTERS E UTILITÁRIOS ---
 
-    public PixScreen getPixScreen() { return pixScreen; }
     public JSONObject getLoggedUser() { return loggedUser; }
     public ResourceBundle getMessages() { return messages; }
     
-    // Getters para as telas acessarem umas às outras se necessário (ex: Menu acessar Edit)
+    // Getters para as telas acessarem umas às outras
     public TransactionScreen getTransactionScreen() { return transactionScreen; }
     public EditUserScreen getEditUserScreen() { return editUserScreen; }
+    public PixScreen getPixScreen() { return pixScreen; }
 
     private void updateLanguage(Locale locale) {
         loadBundle(locale);
@@ -206,6 +216,7 @@ public class ClientApp extends JFrame {
         menuScreen.updateTexts();
         transactionScreen.updateTexts();
         editUserScreen.updateTexts();
+        pixScreen.updateTexts();
     }
 
     private void loadBundle(Locale locale) {

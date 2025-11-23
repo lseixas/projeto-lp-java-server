@@ -4,18 +4,20 @@ import java.io.*;
 import java.net.Socket;
 import java.math.BigDecimal;
 import java.util.Date;
-import java.util.List; // Importante para o Pix
+import java.util.List;
 import com.cvetti.server.usecase.UserDB;
 import com.cvetti.server.objects.User;
-import org.json.JSONArray; // Importante para enviar a lista de chaves
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 public class ClientHandler implements Runnable {
     private final Socket clientSocket;
+    private final int connectionId; 
     private final UserDB userDB = new UserDB();
 
-    public ClientHandler(Socket socket) {
+    public ClientHandler(Socket socket, int connectionId) {
         this.clientSocket = socket;
+        this.connectionId = connectionId;
     }
 
     @Override
@@ -29,24 +31,33 @@ public class ClientHandler implements Runnable {
                 JSONObject request = new JSONObject(line);
                 JSONObject response = new JSONObject();
                 
-                // Identificação do Cliente
                 String ip = clientSocket.getInetAddress().getHostAddress();
                 String action = request.optString("action", "");
-
-                // --- LÓGICA DE MONITORAMENTO E LOGS ---
+                String instanceId = request.optString("instanceId", "???");
+                
+                // Tag Única (IP + ID da Janela)
+                String sessionTag = ip + " [" + instanceId + "]";
+                
+                // Tag Técnica para Debug (mostra ID da thread)
+                String debugTag = "[Conn #" + connectionId + " | " + instanceId + "]";
                 
                 if ("disconnect".equals(action)) {
-                    SessionManager.removeClient(ip);
+                    SessionManager.removeClient(sessionTag); 
                     response.put("status", "bye");
+                    // O log de saída já é feito dentro do removeClient
                 } else {
-                    // Registra atividade (se for novo, imprime no console)
-                    SessionManager.registerActivity(ip);
+                    // Registra que este cliente está vivo
+                    // Se for novo, o SessionManager vai imprimir "Novo cliente..."
+                    SessionManager.registerActivity(sessionTag);
                     
                     if ("heartbeat".equals(action)) {
-                        SessionManager.printConnectedList();
+                        // --- CORREÇÃO AQUI ---
+                        // Removemos o printConnectedList() daqui para parar o spam.
+                        // O heartbeat agora é silencioso no console.
                         response.put("status", "alive");
                     } else {
-                        // Processa a ação real (Login, Pix, etc)
+                        // Ações reais continuam gerando log
+                        System.out.println(debugTag + " solicitou: " + action);
                         processAction(action, request, response);
                     }
                 }
@@ -54,85 +65,62 @@ public class ClientHandler implements Runnable {
                 out.println(response.toString());
             }
         } catch (IOException e) {
-            // Ignora conexões vazias ou erros de rede
+            // Ignora
         } finally {
             try { clientSocket.close(); } catch (IOException ignored) {}
         }
     }
 
-    // --- LÓGICA DE NEGÓCIO ---
+    // --- Lógica de Negócio (Mantenha igual ao anterior) ---
     private void processAction(String action, JSONObject request, JSONObject response) {
         try {
             switch (action) {
-                // --- AUTENTICAÇÃO E CADASTRO ---
                 case "login" -> {
-                    // Login agora é por CPF
-                    User user = userDB.getUserByCpf(request.getString("cpf"));
-                    if (user != null && user.getPasswordHash().equals(request.getString("password"))) {
-                        response.put("status", "success");
-                        response.put("user", user.toMap());
-                    } else {
-                        response.put("status", "error");
-                        response.put("error", "CPF ou Senha incorretos");
-                    }
+                     User user = userDB.getUserByCpf(request.getString("cpf"));
+                     if (user != null && user.getPasswordHash().equals(request.getString("password"))) {
+                         response.put("status", "success");
+                         response.put("user", user.toMap());
+                     } else {
+                         response.put("status", "error");
+                         response.put("error", "Credenciais inválidas");
+                     }
                 }
                 case "create" -> {
-                    User user = new User(
-                        request.getString("id"), request.getString("name"),
-                        request.getString("email"), request.getString("cpf"),
-                        request.getString("phone"), // <--- Novo
-                        request.getString("passwordHash"), request.getString("saldo"), new Date()
-                    );
-                    boolean ok = userDB.addUser(user);
-                    response.put("status", ok ? "success" : "error");
-                    if(!ok) response.put("error", "Erro ao criar conta (CPF ou Email já existem?)");
+                     User user = new User(request.getString("id"), request.getString("name"), request.getString("email"), request.getString("cpf"), request.getString("phone"), request.getString("passwordHash"), request.getString("saldo"), new Date());
+                     response.put("status", userDB.addUser(user) ? "success" : "error");
                 }
                 case "update" -> {
-                    User u = userDB.getUserById(request.getString("id"));
-                    if (u != null) {
-                        u.setName(request.getString("name"));
-                        u.setEmail(request.getString("email"));
-                        userDB.updateUser(u);
-                        response.put("status", "success");
-                    } else response.put("status", "error");
+                      User u = userDB.getUserById(request.getString("id"));
+                      if(u!=null) { u.setName(request.getString("name")); u.setEmail(request.getString("email")); u.setPhone(request.getString("phone")); userDB.updateUser(u); response.put("status", "success"); }
                 }
-
-                // --- TRANSAÇÕES FINANCEIRAS ---
                 case "deposit" -> {
-                    userDB.deposit(request.getString("id"), new BigDecimal(request.getString("value")));
-                    response.put("status", "success");
+                     userDB.deposit(request.getString("id"), new BigDecimal(request.getString("value")));
+                     response.put("status", "success");
                 }
                 case "withdraw" -> {
-                    boolean ok = userDB.withdraw(request.getString("id"), new BigDecimal(request.getString("value")));
-                    if(ok) response.put("status", "success"); 
-                    else response.put("error", "Saldo insuficiente");
+                     boolean ok = userDB.withdraw(request.getString("id"), new BigDecimal(request.getString("value")));
+                     response.put("status", ok ? "success" : "error");
                 }
                 case "transfer" -> {
-                    boolean ok = userDB.transfer(request.getString("id"), request.getString("targetId"), new BigDecimal(request.getString("value")));
-                    if(ok) response.put("status", "success"); 
-                    else response.put("error", "Erro na transferência (Verifique ID e Saldo)");
+                     boolean ok = userDB.transfer(request.getString("id"), request.getString("targetId"), new BigDecimal(request.getString("value")));
+                     response.put("status", ok ? "success" : "error");
                 }
-
-                // --- MÓDULO PIX (NOVO) ---
                 case "pix_add" -> {
-                    boolean ok = userDB.addPixKey(request.getString("id"), request.getString("type"), request.getString("key"));
-                    response.put("status", ok ? "success" : "error");
+                     boolean ok = userDB.addPixKey(request.getString("id"), request.getString("type"), request.getString("key"));
+                     response.put("status", ok ? "success" : "error");
                 }
                 case "pix_list" -> {
-                    List<String> keys = userDB.getPixKeys(request.getString("id"));
-                    response.put("status", "success");
-                    // Converte a lista Java para Array JSON
-                    response.put("keys", new JSONArray(keys));
+                     response.put("status", "success");
+                     response.put("keys", new JSONArray(userDB.getPixKeys(request.getString("id"))));
                 }
                 case "pix_delete" -> {
-                    boolean ok = userDB.deletePixKey(request.getString("id"), request.getString("key"));
-                    response.put("status", ok ? "success" : "error");
+                     boolean ok = userDB.deletePixKey(request.getString("id"), request.getString("key"));
+                     response.put("status", ok ? "success" : "error");
                 }
             }
         } catch (Exception e) {
             response.put("status", "error");
-            response.put("error", "Erro interno: " + e.getMessage());
-            e.printStackTrace(); // Ajuda a debugar no console do servidor
+            response.put("error", e.getMessage());
         }
     }
 }
