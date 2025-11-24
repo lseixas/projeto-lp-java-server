@@ -12,11 +12,16 @@ public class Pass {
         this.hash = hash;
     }
 
+    public String getSalt() { return salt; }
+    public String getHash() { return hash; }
+
+    public void setSalt(String salt) { this.salt = salt; }
+    public void setHash(String hash) { this.hash = hash; }
+
     public HashMap<String, Object> toMap() {
         HashMap<String, Object> result = new HashMap<>();
         result.put("salt", salt);
         result.put("hash", hash);
         return result;
     }
-    
 }

@@ -68,11 +68,11 @@ public class LoginScreen extends JPanel {
     private void doLogin() {
         if (!validateFields()) return;
 
-        String cpfClean = txtCpf.getText().replaceAll("\\D", ""); // Limpa máscara se houver
+        String cpfText = txtCpf.getText();
 
         JSONObject json = new JSONObject();
         json.put("action", "login");
-        json.put("cpf", cpfClean);
+        json.put("cpf", cpfText);
         json.put("password", new String(txtPass.getPassword()));
 
         app.sendRequest(json, response -> {

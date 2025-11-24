@@ -19,7 +19,6 @@ public class UserReturnFormatter {
         json.put("email", user.getEmail());
         json.put("cpf", user.getCpf());
         json.put("saldo", user.getSaldo());
-        json.put("nascimento", user.getNascimento());
         json.put("status", "success");
         json.put("message", "User retrieved successfully");
         return json;

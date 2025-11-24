@@ -119,7 +119,7 @@ public class RegisterScreen extends JPanel {
         json.put("email", txtEmail.getText().trim());
         json.put("cpf", txtCpf.getText().trim()); // Envia com pontuação
         json.put("phone", txtPhone.getText().trim()); // Envia com formatação
-        json.put("passwordHash", new String(txtPass.getPassword()));
+        json.put("password", new String(txtPass.getPassword()));
         json.put("saldo", txtBalance.getText().replace(",", "."));
 
         app.sendRequest(json, response -> {
