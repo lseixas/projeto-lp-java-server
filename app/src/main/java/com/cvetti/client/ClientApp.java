@@ -59,7 +59,7 @@ public class ClientApp extends JFrame {
     private void initializeUI() {
         this.setTitle("Banco Cvetti - Cliente [" + instanceId + "]"); // Mostra ID no título também
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        this.setSize(600, 650); // Altura ajustada para caber tudo
+        this.setSize(1650, 900); // Altura ajustada para caber tudo
         this.setLocationRelativeTo(null);
 
         // --- Painel Central (CardLayout para trocar telas) ---

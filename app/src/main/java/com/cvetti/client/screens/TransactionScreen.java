@@ -5,12 +5,13 @@ import org.json.JSONObject;
 import javax.swing.*;
 import java.awt.*;
 import java.math.BigDecimal;
+import java.net.URL; // Necessário para carregar o arquivo
 
 public class TransactionScreen extends JPanel {
     private ClientApp app;
     private String currentType; // "deposit", "withdraw", "transfer"
 
-    private JLabel lblTitle, lblValue, lblDestiny;
+    private JLabel lblImage, lblTitle, lblValue, lblDestiny;
     private JTextField txtValue, txtDestiny;
     private JButton btnExecute, btnCancel;
 
@@ -25,31 +26,64 @@ public class TransactionScreen extends JPanel {
         gbc.insets = new Insets(10, 10, 10, 10);
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
+        // --- 1. IMAGEM (ATM) ---
+        // Tenta carregar a imagem da pasta resources
+        try {
+            // O caminho começa com / porque está na raiz do resources
+            URL imgUrl = getClass().getResource("/img/atm_image.jpg");
+            
+            if (imgUrl != null) {
+                ImageIcon originalIcon = new ImageIcon(imgUrl);
+                
+                // Redimensiona a imagem para 100x100 (ajuste conforme quiser)
+                Image img = originalIcon.getImage().getScaledInstance(120, 120, Image.SCALE_SMOOTH);
+                
+                lblImage = new JLabel(new ImageIcon(img));
+                // Centraliza a imagem
+                lblImage.setHorizontalAlignment(SwingConstants.CENTER);
+                
+                gbc.gridx = 0; gbc.gridy = 0; gbc.gridwidth = 2;
+                add(lblImage, gbc);
+            } else {
+                System.err.println("Imagem não encontrada em /img/atm_image.jpg");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        // --- 2. TÍTULO ---
         lblTitle = new JLabel("Transação");
         lblTitle.setFont(new Font("Arial", Font.BOLD, 20));
-        gbc.gridx = 0; gbc.gridy = 0; gbc.gridwidth = 2;
+        lblTitle.setHorizontalAlignment(SwingConstants.CENTER); // Centraliza texto
+        
+        gbc.gridx = 0; gbc.gridy = 1; gbc.gridwidth = 2; // Agora é linha 1
         add(lblTitle, gbc);
 
-        // Destino (Só para transferência)
+        // --- 3. DESTINO (Só para transferência) ---
         lblDestiny = new JLabel();
         txtDestiny = new JTextField(15);
-        gbc.gridy = 1; gbc.gridwidth = 1;
-        add(lblDestiny, gbc);
+        
+        gbc.gridy = 2; gbc.gridwidth = 1; // Agora é linha 2
+        gbc.gridx = 0; add(lblDestiny, gbc);
         gbc.gridx = 1; add(txtDestiny, gbc);
 
-        // Valor
+        // --- 4. VALOR ---
         lblValue = new JLabel();
         txtValue = new JTextField(15);
-        gbc.gridx = 0; gbc.gridy = 2; add(lblValue, gbc);
+        
+        gbc.gridy = 3; // Agora é linha 3
+        gbc.gridx = 0; add(lblValue, gbc);
         gbc.gridx = 1; add(txtValue, gbc);
 
-        // Botões
+        // --- 5. BOTÕES ---
         btnCancel = new JButton("Cancelar");
         btnExecute = new JButton("Confirmar");
         
-        gbc.gridx = 0; gbc.gridy = 3; add(btnCancel, gbc);
+        gbc.gridy = 4; // Agora é linha 4
+        gbc.gridx = 0; add(btnCancel, gbc);
         gbc.gridx = 1; add(btnExecute, gbc);
 
+        // Ações
         btnCancel.addActionListener(e -> app.showScreen("MENU"));
         btnExecute.addActionListener(e -> doTransaction());
     }
@@ -66,25 +100,20 @@ public class TransactionScreen extends JPanel {
         txtDestiny.setVisible(isTransfer);
     }
 
-    // --- NOVA VALIDAÇÃO ---
     private boolean validateFields() {
         String valueStr = txtValue.getText().trim();
 
-        // 1. Valida se está vazio
         if (valueStr.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Por favor, digite um valor.");
             return false;
         }
 
-        // 2. Valida Destino (apenas se for transferência)
         if ("transfer".equals(currentType) && txtDestiny.getText().trim().isEmpty()) {
             JOptionPane.showMessageDialog(this, "Por favor, informe o ID de destino.");
             return false;
         }
 
-        // 3. Valida Formato do Valor e se é Positivo
         try {
-            // Troca vírgula por ponto para o Java entender (ex: "10,50" -> "10.50")
             String cleanValue = valueStr.replace(",", ".");
             BigDecimal val = new BigDecimal(cleanValue);
 
@@ -101,9 +130,8 @@ public class TransactionScreen extends JPanel {
     }
 
     private void doTransaction() {
-        if (!validateFields()) return; // Para se a validação falhar
+        if (!validateFields()) return; 
 
-        // Prepara o valor formatado para o servidor (com ponto)
         String formattedValue = txtValue.getText().replace(",", ".");
 
         JSONObject json = new JSONObject();
