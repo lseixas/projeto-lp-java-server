@@ -96,13 +96,30 @@ public class ClientApp extends JFrame {
 
         // Botões de Idioma
         JPanel langPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
+
         JButton btnPt = new JButton("PT");
         btnPt.addActionListener(e -> updateLanguage(Locale.forLanguageTag("pt-BR")));
         JButton btnEn = new JButton("EN");
         btnEn.addActionListener(e -> updateLanguage(Locale.forLanguageTag("en-US")));
-        
+        JButton btnEs = new JButton("ES");
+        btnEs.addActionListener(e -> updateLanguage(Locale.forLanguageTag("es-ES")));
+        JButton btnFr = new JButton("FR");
+        btnFr.addActionListener(e -> updateLanguage(Locale.forLanguageTag("fr-FR")));
+        JButton btnDe = new JButton("DE");
+        btnDe.addActionListener(e -> updateLanguage(Locale.forLanguageTag("de-DE")));
+        JButton btnIt = new JButton("IT");
+        btnIt.addActionListener(e -> updateLanguage(Locale.forLanguageTag("it-IT")));
+        JButton btnJa = new JButton("JP");
+        btnJa.addActionListener(e -> updateLanguage(Locale.forLanguageTag("ja-JP")));
+
         langPanel.add(btnPt);
         langPanel.add(btnEn);
+        langPanel.add(btnEs);
+        langPanel.add(btnFr);
+        langPanel.add(btnDe);
+        langPanel.add(btnIt);
+        langPanel.add(btnJa);
+
         bottomPanel.add(langPanel, BorderLayout.EAST);
 
         this.add(bottomPanel, BorderLayout.SOUTH);

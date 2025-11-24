@@ -3,7 +3,6 @@ package com.cvetti.server;
 import java.io.*;
 import java.net.Socket;
 import java.math.BigDecimal;
-import java.util.Date;
 
 import com.cvetti.server.utils.PasswordUtils;
 import com.cvetti.server.usecase.UserDB;
