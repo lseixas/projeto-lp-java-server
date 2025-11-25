@@ -19,20 +19,40 @@ public class EditUserScreen extends JPanel {
         setLayout(new GridLayout(5, 2, 10, 10)); // Aumentado
         setBorder(BorderFactory.createEmptyBorder(50, 50, 50, 50));
         
-        lblName = new JLabel(); add(lblName);
-        txtName = new JTextField(); add(txtName);
-        
-        lblEmail = new JLabel(); add(lblEmail);
-        txtEmail = new JTextField(); add(txtEmail);
+        lblName = new JLabel();
+        lblName.setForeground(Color.BLACK);
+        add(lblName);
 
-        lblPhone = new JLabel(); add(lblPhone); // Novo Campo
-        txtPhone = new JTextField(); add(txtPhone);
+        txtName = new JTextField();
+        txtName.setForeground(Color.BLACK);
+        txtName.setCaretColor(Color.BLACK);
+        add(txtName);
+        
+        lblEmail = new JLabel();
+        lblEmail.setForeground(Color.BLACK);
+        add(lblEmail);
+
+        txtEmail = new JTextField();
+        txtEmail.setForeground(Color.BLACK);
+        txtEmail.setCaretColor(Color.BLACK);
+        add(txtEmail);
+
+        lblPhone = new JLabel();
+        lblPhone.setForeground(Color.BLACK);
+        add(lblPhone); // Novo Campo
+
+        txtPhone = new JTextField();
+        txtPhone.setForeground(Color.BLACK);
+        txtPhone.setCaretColor(Color.BLACK);
+        add(txtPhone);
         
         btnCancel = new JButton();
+        btnCancel.setForeground(Color.BLACK);
         btnCancel.addActionListener(e -> app.showScreen("MENU"));
         add(btnCancel);
         
         btnSave = new JButton();
+        btnSave.setForeground(Color.BLACK);
         btnSave.addActionListener(e -> doUpdate());
         add(btnSave);
     }

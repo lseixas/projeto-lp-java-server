@@ -52,11 +52,17 @@ public class MenuScreen extends JPanel {
 
         btnLogout.addActionListener(e -> app.logout());
         add(btnLogout);
+
+        this.updateTexts();
     }
 
     private JButton createMenuButton(String key) {
         JButton btn = new JButton();
         btn.putClientProperty("key", key); // Guarda a chave para tradução
+
+        btn.setForeground(Color.BLACK); // Força o texto a ser preto
+        btn.setBackground(Color.WHITE); // Garante fundo branco para contraste
+        btn.setFocusPainted(false);     // (Opcional) Remove a borda de foco feia ao clicar
         add(btn);
         return btn;
     }

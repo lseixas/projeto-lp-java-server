@@ -70,13 +70,27 @@ public class RegisterScreen extends JPanel {
         // --- 2a. Formulário (Centro do Container Esquerdo) ---
         JPanel pnlForm = new JPanel(new GridLayout(6, 2, 10, 15)); // Mais espaçamento vertical
         
-        lblName = new JLabel(); pnlForm.add(lblName);
-        txtName = new JTextField(); pnlForm.add(txtName);
+        lblName = new JLabel();
+        lblName.setForeground(Color.BLACK);
+        pnlForm.add(lblName);
 
-        lblEmail = new JLabel(); pnlForm.add(lblEmail);
-        txtEmail = new JTextField(); pnlForm.add(txtEmail);
+        txtName = new JTextField();
+        txtName.setForeground(Color.BLACK);
+        txtName.setCaretColor(Color.BLACK);
+        pnlForm.add(txtName);
 
-        lblCpf = new JLabel(); pnlForm.add(lblCpf);
+        lblEmail = new JLabel();
+        lblEmail.setForeground(Color.BLACK);
+        pnlForm.add(lblEmail);
+
+        txtEmail = new JTextField();
+        lblEmail.setForeground(Color.BLACK);
+        pnlForm.add(txtEmail);
+
+        lblCpf = new JLabel();
+        lblCpf.setForeground(Color.BLACK);
+        pnlForm.add(lblCpf);
+
         txtCpf = new JTextField(); 
         txtCpf.setToolTipText("Ex: 123.456.789-00"); 
         pnlForm.add(txtCpf);
@@ -109,6 +123,11 @@ public class RegisterScreen extends JPanel {
         // Cor de destaque para o botão principal (opcional, fica bonito com a imagem)
         btnRegister.setBackground(new Color(70, 130, 180)); 
         btnRegister.setForeground(Color.WHITE);
+        // Garantir que a cor de fundo aparece
+        btnRegister.setOpaque(true);
+        btnRegister.setContentAreaFilled(true);
+        btnRegister.setBorderPainted(false);
+
         btnRegister.setFont(new Font("Arial", Font.BOLD, 14));
         btnRegister.addActionListener(e -> doRegister());
         pnlButtons.add(btnRegister);

@@ -56,6 +56,11 @@ public class PixScreen extends JPanel {
         btnGenerateQR = new JButton("Gerar QR Code");
         btnGenerateQR.setBackground(new Color(70, 130, 180));
         btnGenerateQR.setForeground(Color.WHITE);
+
+        btnGenerateQR.setOpaque(true);
+        btnGenerateQR.setContentAreaFilled(true);
+        btnGenerateQR.setBorderPainted(false);
+
         top.add(btnGenerateQR);
         
         panel.add(top, BorderLayout.NORTH);
