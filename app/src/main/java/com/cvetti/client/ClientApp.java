@@ -18,6 +18,9 @@ public class ClientApp extends JFrame {
     private ResourceBundle messages;
     private JSONObject loggedUser;
 
+    private String serverIp = "believe-unlimited.gl.at.ply.gg";
+    private int serverPort = 23541;
+
     // --- IDENTIFICADOR ÚNICO DA INSTÂNCIA (JANELA) ---
     // Gera um código curto (ex: "A1B2C") ao abrir o app para o servidor saber quem é quem
     private final String instanceId = UUID.randomUUID().toString().substring(0, 5).toUpperCase();
@@ -35,7 +38,8 @@ public class ClientApp extends JFrame {
 
     public ClientApp() {
         // 1. Configurações Iniciais
-        socketClient = new SocketClient("localhost", 8080);
+        
+        socketClient = new SocketClient(serverIp, serverPort);
         loadBundle(Locale.forLanguageTag("pt-BR"));
 
         initializeUI();
