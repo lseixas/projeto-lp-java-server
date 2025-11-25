@@ -14,7 +14,7 @@ public class SessionManager {
     public static void registerActivity(String clientTag) {
         // O método .add retorna true se o item NÃO existia antes (ou seja, é novo)
         if (activeClients.add(clientTag)) {
-            System.out.println("Novo cliente conectado: " + clientTag);
+            Server.log("Novo cliente conectado: " + clientTag);
             printConnectedList(); // Imprime a lista apenas na entrada
         }
     }
@@ -24,7 +24,7 @@ public class SessionManager {
      */
     public static void removeClient(String clientTag) {
         if (activeClients.remove(clientTag)) {
-            System.out.println(clientTag + " saiu.");
+            Server.log(clientTag + " saiu.");
             printConnectedList(); // Imprime a lista apenas na saída
         }
     }
@@ -34,10 +34,10 @@ public class SessionManager {
      */
     public static void printConnectedList() {
         if (activeClients.isEmpty()) {
-            System.out.println("Nenhum cliente conectado.");
+            Server.log("Nenhum cliente conectado.");
         } else {
             String lista = String.join(", ", activeClients);
-            System.out.println(">> Clientes Online: " + lista);
+            Server.log(">> Clientes Online: " + lista);
         }
     }
 }

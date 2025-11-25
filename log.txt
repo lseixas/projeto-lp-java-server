@@ -1,0 +1,39 @@
+--------- SESSÃO INICIADA ---------
+=========================================
+   SERVIDOR INICIADO NA PORTA 8080
+   (Pressione Ctrl+C para parar e salvar o log)
+=========================================
+--------- SESSÃO FINALIZADA ---------
+
+--------- SESSÃO INICIADA ---------
+=========================================
+   SERVIDOR INICIADO NA PORTA 8080
+   (Pressione Ctrl+C para parar e salvar o log)
+=========================================
+Novo cliente conectado: 127.0.0.1 [7C2E5]
+>> Clientes Online: 127.0.0.1 [7C2E5]
+Enviado: {"status":"alive"}
+Enviado: {"status":"alive"}
+127.0.0.1 [7C2E5] saiu.
+Nenhum cliente conectado.
+Enviado: {"status":"bye"}
+Novo cliente conectado: 127.0.0.1 [F1109]
+>> Clientes Online: 127.0.0.1 [F1109]
+Enviado: {"status":"alive"}
+Enviado: {"status":"alive"}
+127.0.0.1 [F1109] saiu.
+Nenhum cliente conectado.
+Enviado: {"status":"bye"}
+--------- SESSÃO FINALIZADA ---------
+
+--------- SESSÃO INICIADA ---------
+=========================================
+   SERVIDOR INICIADO NA PORTA 8080
+   (Pressione Ctrl+C para parar e salvar o log)
+=========================================
+Novo cliente conectado: 127.0.0.1 [39C93]
+>> Clientes Online: 127.0.0.1 [39C93]
+Enviado: {"status":"alive"}
+Enviado: {"status":"alive"}
+--------- SESSÃO FINALIZADA ---------
+

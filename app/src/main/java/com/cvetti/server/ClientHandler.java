@@ -50,13 +50,13 @@ public class ClientHandler implements Runnable {
                     if ("heartbeat".equals(action)) {
                         response.put("status", "alive");
                     } else {
-                        System.out.println(debugTag + " solicitou: " + action);
+                        Server.log(debugTag + " solicitou: " + action);
                         processAction(action, request, response);
                     }
                 }
 
                 out.println(response.toString());
-                System.out.println("Enviado: " + response.toString());
+                Server.log("Enviado: " + response.toString());
             }
         } catch (IOException ignored) {
         } finally {
