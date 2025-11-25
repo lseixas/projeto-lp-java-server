@@ -1,5 +1,6 @@
 package com.cvetti.server;
 
+import java.net.InetAddress;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -36,8 +37,11 @@ public class Server {
         Runtime.getRuntime().addShutdownHook(new Thread(this::saveLogToFile));
 
         try (ServerSocket serverSocket = new ServerSocket(port)) {
+            String serverIp = InetAddress.getLocalHost().getHostAddress();
+
             log("=========================================");
-            log("   SERVIDOR INICIADO NA PORTA " + port);
+            log("   SERVIDOR INICIADO");
+            log("   ENDEREÇO: " + serverIp + ":" + port); // Mostra IP:Porta
             log("   (Pressione Ctrl+C para parar e salvar o log)");
             log("=========================================");
 
